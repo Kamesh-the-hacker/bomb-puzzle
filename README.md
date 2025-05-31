@@ -12,7 +12,7 @@ A timed, hacker-style *web-based puzzle game* where players must defuse a virtua
 
 ## 🔗 Play Now
 
-👉 [Click Here to Play the Game](https://kamesh-the-hacker.github.io/bomb-defusal-game/)
+👉 [Click Here to Play the Game](https://kamesh-the-hacker.github.io/bomb-puzzle/)
 
 > Hosted via *GitHub Pages* — no installation needed.
 
