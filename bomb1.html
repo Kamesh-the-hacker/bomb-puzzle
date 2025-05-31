@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bomb Defusal Game</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(45deg, #1a1a1a, #2d2d2d);
+            font-family: 'Orbitron', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: #fff;
+            overflow-x: hidden;
+            padding: 20px;
+        }
+
+        .bomb-container {
+            background: linear-gradient(145deg, #333, #1a1a1a);
+            border: 3px solid #444;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(255, 0, 0, 0.3);
+            text-align: center;
+            position: relative;
+            max-width: 550px;
+            width: 90%;
+        }
+
+        .bomb-visual {
+            width: 300px;
+            height: 150px;
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            border-radius: 10px;
+            margin: 0 auto 20px;
+            position: relative;
+            box-shadow: 0 10px 30px rgba(231, 76, 60, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px;
+        }
+
+        .bomb-cylinder {
+            width: 45px;
+            height: 120px;
+            background: linear-gradient(90deg, #e74c3c, #c0392b, #e74c3c);
+            border-radius: 25px;
+            position: relative;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        .bomb-cylinder::before {
+            content: '';
+            position: absolute;
+            width: 35px;
+            height: 110px;
+            background: linear-gradient(90deg, #c0392b, #e74c3c);
+            border-radius: 20px;
+            top: 5px;
+            left: 5px;
+        }
+
+        .bomb-display {
+            background: #000;
+            border: 3px solid #333;
+            border-radius: 8px;
+            padding: 10px;
+            margin: 0 10px;
+            flex-grow: 1;
+            height: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+        }
+
+        .bomb-keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 3px;
+            margin-left: 10px;
+        }
+
+        .bomb-key {
+            width: 25px;
+            height: 20px;
+            background: linear-gradient(145deg, #555, #333);
+            border: 1px solid #666;
+            border-radius: 3px;
+            font-size: 10px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .bomb-wires {
+            position: absolute;
+            right: -20px;
+            top: 20px;
+            width: 40px;
+            height: 100px;
+        }
+
+        .wire {
+            position: absolute;
+            width: 3px;
+            height: 80px;
+            border-radius: 2px;
+        }
+
+        .wire:nth-child(1) { background: #3498db; left: 5px; transform: rotate(5deg); }
+        .wire:nth-child(2) { background: #e74c3c; left: 12px; transform: rotate(-3deg); }
+        .wire:nth-child(3) { background: #f39c12; left: 19px; transform: rotate(7deg); }
+        .wire:nth-child(4) { background: #27ae60; left: 26px; transform: rotate(-5deg); }
+
+        @keyframes flicker {
+            0% { opacity: 1; }
+            100% { opacity: 0.3; }
+        }
+
+        .timer {
+            font-size: 2.5em;
+            font-weight: 900;
+            color: #e74c3c;
+            margin: 20px 0;
+            text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+            letter-spacing: 2px;
+        }
+
+        .timer.warning {
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); color: #e74c3c; }
+            50% { transform: scale(1.1); color: #ff6b6b; }
+            100% { transform: scale(1); color: #e74c3c; }
+        }
+
+        .pin-display {
+            background: #000;
+            color: #00ff00;
+            font-size: 1.5em;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 3px;
+            border: 2px solid #00ff00;
+            box-shadow: inset 0 0 10px rgba(0, 255, 0, 0.2);
+        }
+
+        .pin-input {
+            background: #2c3e50;
+            color: #fff;
+            border: 2px solid #34495e;
+            padding: 15px;
+            font-size: 1.5em;
+            text-align: center;
+            border-radius: 10px;
+            width: 150px;
+            margin: 10px;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 2px;
+        }
+
+        .pin-input:focus {
+            outline: none;
+            border-color: #3498db;
+            box-shadow: 0 0 10px rgba(52, 152, 219, 0.5);
+        }
+
+        .pin-feedback {
+            display: flex;
+            justify-content: center;
+            margin: 15px 0;
+            gap: 10px;
+        }
+
+        .digit-feedback {
+            width: 40px;
+            height: 40px;
+            border: 2px solid #34495e;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            background: #2c3e50;
+            color: #fff;
+            transition: all 0.3s ease;
+        }
+
+        .digit-correct {
+            background: #27ae60 !important;
+            border-color: #2ecc71 !important;
+            color: #fff !important;
+            box-shadow: 0 0 15px rgba(39, 174, 96, 0.5);
+        }
+
+        .digit-incorrect {
+            background: #e74c3c !important;
+            border-color: #c0392b !important;
+            color: #fff !important;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.5);
+        }
+
+        .feedback-history {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 15px 0;
+            padding: 10px;
+            background: rgba(52, 73, 94, 0.3);
+            border-radius: 10px;
+        }
+
+        .attempt-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 8px 0;
+            gap: 15px;
+        }
+
+        .attempt-pin {
+            display: flex;
+            gap: 5px;
+        }
+
+        .attempt-digit {
+            width: 25px;
+            height: 25px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .btn {
+            background: linear-gradient(145deg, #27ae60, #229954);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 10px;
+            cursor: pointer;
+            margin: 10px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(39, 174, 96, 0.4);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .reset-btn {
+            background: linear-gradient(145deg, #f39c12, #e67e22);
+            box-shadow: 0 5px 15px rgba(243, 156, 18, 0.3);
+        }
+
+        .reset-btn:hover {
+            box-shadow: 0 7px 20px rgba(243, 156, 18, 0.4);
+        }
+
+        .attempts {
+            color: #f39c12;
+            font-size: 1.2em;
+            margin: 15px 0;
+            font-weight: 700;
+        }
+
+        /* Fixed success message positioning */
+        .success-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .success-overlay.active {
+            display: flex;
+        }
+
+        .pc {
+            background: linear-gradient(45deg, #27ae60, #2ecc71);
+            padding: 30px;
+            border-radius: 20px;
+            font-size: 1.3em;
+            font-weight: 700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+            animation: celebration 2s infinite;
+            box-shadow: 0 0 50px rgba(39, 174, 96, 0.8);
+            border: 3px solid #2ecc71;
+            max-width: 90vw;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes celebration {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .explosion {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: radial-gradient(circle, #ff6b6b 0%, #e74c3c 30%, #c0392b 60%, #000 100%);
+            display: none;
+            z-index: 1000;
+            animation: explode 2s ease-out;
+        }
+
+        .explosion.active {
+            display: block;
+        }
+
+        @keyframes explode {
+            0% {
+                transform: scale(0);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.8;
+            }
+            100% {
+                transform: scale(3);
+                opacity: 0;
+            }
+        }
+
+        .game-over {
+            color: #e74c3c;
+            font-size: 1.5em;
+            font-weight: 900;
+            margin: 20px 0;
+            text-shadow: 0 0 10px rgba(231, 76, 60, 0.5);
+        }
+
+        .instructions {
+            background: rgba(52, 73, 94, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 0.9em;
+            line-height: 1.5;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .close-btn {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 1em;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: 'Orbitron', monospace;
+            font-weight: 700;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .close-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 20px rgba(231, 76, 60, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <div class="bomb-container" id="gameContainer">
+        <div class="instructions">
+            <strong>BOMB DEFUSAL MISSION</strong><br>
+            Enter the correct 4-digit PIN to defuse the bomb!<br>
+            You have 2 minutes and 10 attempts. Good luck!
+        </div>
+        
+        <div class="bomb-visual">
+            <div class="bomb-cylinder"></div>
+            <div class="bomb-cylinder"></div>
+            <div class="bomb-display">
+                <div class="timer" id="timerDisplay" style="display: none;">04:00</div>
+            </div>
+            <div class="bomb-keypad">
+                <div class="bomb-key">1</div>
+                <div class="bomb-key">2</div>
+                <div class="bomb-key">3</div>
+                <div class="bomb-key">4</div>
+                <div class="bomb-key">5</div>
+                <div class="bomb-key">6</div>
+                <div class="bomb-key">7</div>
+                <div class="bomb-key">8</div>
+                <div class="bomb-key">9</div>
+            </div>
+            <div class="bomb-wires">
+                <div class="wire"></div>
+                <div class="wire"></div>
+                <div class="wire"></div>
+                <div class="wire"></div>
+            </div>
+        </div>
+        
+        <div class="timer" id="timer">04:00</div>
+        
+        <div class="pin-display" id="pinDisplay">ENTER 4-DIGIT CODE</div>
+        
+        <input type="text" class="pin-input" id="pinInput" maxlength="4" placeholder="0000">
+        
+        <div class="pin-feedback" id="pinFeedback">
+            <div class="digit-feedback" id="digit1">?</div>
+            <div class="digit-feedback" id="digit2">?</div>
+            <div class="digit-feedback" id="digit3">?</div>
+            <div class="digit-feedback" id="digit4">?</div>
+        </div>
+        
+        <div>
+            <button class="btn" onclick="checkPin()">DEFUSE</button>
+            <button class="btn reset-btn" onclick="resetGame()">NEW GAME</button>
+        </div>
+        
+        <div class="feedback-history" id="feedbackHistory"></div>
+        
+        <div class="attempts" id="attempts">Attempts left: 15</div>
+        
+        <div class="game-over hidden" id="gameOver">
+            💥 GAME OVER 💥<br>
+            The bomb exploded!
+        </div>
+    </div>
+    
+    <!-- Success overlay that covers the entire screen -->
+    <div class="success-overlay" id="successOverlay">
+        <div class="pc" id="pc">
+            🎉 BOMB DEFUSED! 🎉<br>
+            <div style="margin-top: 15px; padding: 15px; background: rgba(0,0,0,0.3); border-radius: 10px; font-family: 'Courier New', monospace;">
+                <div style="color: #00ff00; font-size: 1.1em; margin-bottom: 10px;">
+                    MISSION COMPLETE - FLAG DECODED:
+                </div>
+                <div id="decodedpc" style="color: #fff; font-size: 1.2em; font-weight: bold; background: #000; padding: 10px; border-radius: 5px; margin: 10px 0;">
+                    
+                </div>
+                <div style="color: #888; font-size: 0.9em; margin-top: 10px;">
+                    Congratulations! You've successfully defused the bomb!
+                </div>
+            </div>
+            <button class="close-btn" onclick="closeSuccessMessage()">CONTINUE</button>
+        </div>
+    </div>
+    
+    <div class="explosion" id="explosion"></div>
+
+    <script>
+        let gameState = {
+            pin: '',
+            timeLeft: 120, // 2 minutes = 120 seconds
+            attemptsLeft: 10,
+            gameActive: true,
+            timer: null,
+            attemptHistory: []
+        };
+
+        function generateRandomPin() {
+            return Math.floor(Math.random() * 9000 + 1000).toString();
+        }
+
+        function startGame() {
+            gameState.pin = generateRandomPin();
+            gameState.timeLeft = 120; // 2 minutes = 120 seconds
+            gameState.attemptsLeft = 10;
+            gameState.gameActive = true;
+            gameState.attemptHistory = [];
+            
+            document.getElementById('pinDisplay').textContent = 'ENTER 4-DIGIT CODE';
+            document.getElementById('successOverlay').classList.remove('active');
+            document.getElementById('gameOver').classList.add('hidden');
+            document.getElementById('pinInput').value = '';
+            document.getElementById('pinInput').disabled = false;
+            
+            // Reset digit feedback
+            for (let i = 1; i <= 4; i++) {
+                const digitElement = document.getElementById(`digit${i}`);
+                digitElement.textContent = '?';
+                digitElement.classList.remove('digit-correct', 'digit-incorrect');
+            }
+            
+            // Clear history
+            document.getElementById('feedbackHistory').innerHTML = '';
+            
+            updateDisplay();
+            startTimer();
+            
+            console.log('Secret PIN:', gameState.pin); // For debugging only
+        }
+
+        function startTimer() {
+            if (gameState.timer) {
+                clearInterval(gameState.timer);
+            }
+            
+            gameState.timer = setInterval(() => {
+                gameState.timeLeft--;
+                updateDisplay();
+                
+                if (gameState.timeLeft <= 30) {
+                    document.getElementById('timer').classList.add('warning');
+                    document.getElementById('timerDisplay').classList.add('warning');
+                }
+                
+                if (gameState.timeLeft <= 0) {
+                    endGame(false);
+                }
+            }, 1000);
+        }
+
+        function updateDisplay() {
+            const minutes = Math.floor(gameState.timeLeft / 60);
+            const seconds = gameState.timeLeft % 60;
+            const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            document.getElementById('timer').textContent = timeString;
+            document.getElementById('timerDisplay').textContent = timeString;
+            
+            document.getElementById('attempts').textContent = 
+                `Attempts left: ${gameState.attemptsLeft}`;
+        }
+
+        function checkPin() {
+            if (!gameState.gameActive) return;
+            
+            const userPin = document.getElementById('pinInput').value;
+            
+            if (userPin.length !== 4) {
+                alert('Please enter a 4-digit PIN!');
+                return;
+            }
+            
+            // Check each digit and provide feedback
+            const feedback = [];
+            for (let i = 0; i < 4; i++) {
+                feedback.push(userPin[i] === gameState.pin[i]);
+            }
+            
+            // Update visual feedback
+            updateDigitFeedback(userPin, feedback);
+            
+            // Add to history
+            gameState.attemptHistory.push({
+                pin: userPin,
+                feedback: feedback
+            });
+            updateFeedbackHistory();
+            
+            if (userPin === gameState.pin) {
+                endGame(true);
+            } else {
+                gameState.attemptsLeft--;
+                
+                if (gameState.attemptsLeft <= 0) {
+                    endGame(false);
+                } else {
+                    updateDisplay();
+                    document.getElementById('pinInput').value = '';
+                }
+            }
+        }
+
+        function updateDigitFeedback(userPin, feedback) {
+            for (let i = 0; i < 4; i++) {
+                const digitElement = document.getElementById(`digit${i + 1}`);
+                digitElement.textContent = userPin[i];
+                
+                // Remove previous classes
+                digitElement.classList.remove('digit-correct', 'digit-incorrect');
+                
+                // Add appropriate class
+                if (feedback[i]) {
+                    digitElement.classList.add('digit-correct');
+                } else {
+                    digitElement.classList.add('digit-incorrect');
+                }
+            }
+        }
+
+        function updateFeedbackHistory() {
+            const historyElement = document.getElementById('feedbackHistory');
+            historyElement.innerHTML = '';
+            
+            gameState.attemptHistory.forEach((attempt, index) => {
+                const attemptRow = document.createElement('div');
+                attemptRow.className = 'attempt-row';
+                
+                const attemptLabel = document.createElement('span');
+                attemptLabel.textContent = `Try ${index + 1}:`;
+                attemptLabel.style.minWidth = '50px';
+                attemptLabel.style.fontSize = '0.9em';
+                
+                const attemptPin = document.createElement('div');
+                attemptPin.className = 'attempt-pin';
+                
+                for (let i = 0; i < 4; i++) {
+                    const digit = document.createElement('div');
+                    digit.className = 'attempt-digit';
+                    digit.textContent = attempt.pin[i];
+                    
+                    if (attempt.feedback[i]) {
+                        digit.style.background = '#27ae60';
+                        digit.style.color = '#fff';
+                    } else {
+                        digit.style.background = '#e74c3c';
+                        digit.style.color = '#fff';
+                    }
+                    
+                    attemptPin.appendChild(digit);
+                }
+                
+                attemptRow.appendChild(attemptLabel);
+                attemptRow.appendChild(attemptPin);
+                historyElement.appendChild(attemptRow);
+            });
+            
+            // Scroll to bottom
+            historyElement.scrollTop = historyElement.scrollHeight;
+        }
+
+        function endGame(success) {
+            gameState.gameActive = false;
+            clearInterval(gameState.timer);
+            document.getElementById('timer').classList.remove('warning');
+            document.getElementById('timerDisplay').classList.remove('warning');
+            document.getElementById('pinInput').disabled = true;
+            
+            if (success) {
+                const encodedpc = 'RkxBR3tEVU1NWV9CQVdBfQ==';
+                const decodedpc = atob(encodedpc);
+                document.getElementById('decodedpc').textContent = decodedpc;
+                
+                // Show success overlay with proper centering
+                document.getElementById('successOverlay').classList.add('active');
+                
+                // Success celebration background effect
+                document.body.style.background = 'linear-gradient(45deg, #27ae60, #2ecc71)';
+                setTimeout(() => {
+                    document.body.style.background = 'linear-gradient(45deg, #1a1a1a, #2d2d2d)';
+                }, 3000);
+            } else {
+                document.getElementById('gameOver').classList.remove('hidden');
+                explode();
+            }
+        }
+
+        function closeSuccessMessage() {
+            document.getElementById('successOverlay').classList.remove('active');
+        }
+
+        function explode() {
+            const explosion = document.getElementById('explosion');
+            explosion.classList.add('active');
+            
+            // Screen shake effect
+            document.body.style.animation = 'shake 0.5s ease-in-out 3';
+            
+            setTimeout(() => {
+                explosion.classList.remove('active');
+                document.body.style.animation = '';
+            }, 2000);
+        }
+
+        function resetGame() {
+            clearInterval(gameState.timer);
+            document.getElementById('timer').classList.remove('warning');
+            document.getElementById('timerDisplay').classList.remove('warning');
+            document.body.style.background = 'linear-gradient(45deg, #1a1a1a, #2d2d2d)';
+            document.getElementById('successOverlay').classList.remove('active');
+            startGame();
+        }
+
+        // Allow Enter key to submit PIN
+        document.getElementById('pinInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPin();
+            }
+        });
+
+        // Only allow numbers in PIN input
+        document.getElementById('pinInput').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '');
+        });
+
+        // Add shake animation
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-5px); }
+                75% { transform: translateX(5px); }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Start the game when page loads
+        startGame();
+    </script>
+</body>
+</html>
